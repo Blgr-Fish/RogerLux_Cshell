@@ -4,9 +4,30 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <termios.h>
 
 #define BUFFER_SIZE 1024 
 #define TOKEN_DELIMITER " \t" // set of delimiters
+
+
+#define DELETE_CHAR 127
+#define ESC_CHAR 27
+
+struct termios orig_termios;
+
+void disable_raw_mode() {
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios); 
+}
+
+void enable_raw_mode() {
+    struct termios raw;
+    atexit(disable_raw_mode);
+    tcgetattr(STDIN_FILENO, &orig_termios);
+    raw = orig_termios;
+    raw.c_lflag &= ~(ICANON | ECHO); 
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+}
+
 
 // methods enumeration
 void loop();
@@ -42,8 +63,8 @@ char * read_line() {
 
     // no space for allocation
     if (!buffer) {
-        fprintf(stderr, "error: Allocation error\n");
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "error: Allocation error\n") ;
+        exit(EXIT_FAILURE) ;
     }
 
     while (1) {
@@ -52,21 +73,48 @@ char * read_line() {
 
         // enf of line
         if (c == EOF || c == '\n') {
-            buffer[position] = '\0';
+            buffer[position] = '\0' ;
+            printf("\n");
             return buffer ;
         } 
-        
-        buffer[position++] = c ;
+        // delete character
+        else if (c == DELETE_CHAR) {
+            
+            if (position > 0) {
+                position -- ;
+                printf("\b \b") ;
+                fflush(stdout) ;
+            }
+        // only for arrow characters for now
+        }else if (c == ESC_CHAR) {
+            
+            // arrows are composed of 3 bytes, so we need to take of the 2 next chars
+            char seq1 = getchar();
+            char seq2 = getchar();
+                /* 
+                * for later if i want to handle this...
+                    switch (seq2) {
+                        case 'A': // up
+                        case 'B': // down
+                        case 'C': // right
+                        case 'D': // left
+                    }
+                */
+
+        } else {
+            buffer[position++] = c ;
+            printf("%c", c);
+        }
 
         if (position >= buffer_size) {
 
             buffer_size += BUFFER_SIZE ;
-            buffer = realloc(buffer,buffer_size);
+            buffer = realloc(buffer, sizeof(char)* buffer_size);
 
             // no space for allocation
             if (!buffer) {
-                fprintf(stderr, "error: Allocation error\n");
-                exit(EXIT_FAILURE);
+                fprintf(stderr, "error: Allocation error\n") ;
+                exit(EXIT_FAILURE) ;
             }
         }
     }
@@ -91,7 +139,7 @@ char ** parse_line( char * line) {
         
         if (position >= buffer_size) {
             buffer_size += BUFFER_SIZE ;
-            tokens = realloc(tokens, buffer_size);
+            tokens = realloc(tokens,  sizeof(char * )* buffer_size);
 
             if (!tokens) {
                 fprintf(stderr, "error: Allocation error\n");
@@ -147,7 +195,7 @@ int exec_cd(char ** words) {
 
     int status = 1 ;
 
-    if (words[1] == NULL || strcmp(words[1], " ") == 0 || strcmp(words[1], "~") == 0) {
+    if (words[1] == NULL || strcmp(words[1], "~") == 0) {
         words[1] = getenv("HOME") ;
     }
 
@@ -176,7 +224,9 @@ void loop() {
         
         getcwd(working_directory, w_size) ;
         printf("\n╭─(%s)\n╰─>",working_directory);
+        enable_raw_mode() ;
         line = read_line() ;
+        disable_raw_mode() ;
         words = parse_line(line) ;
         //print_words(words) ;
         if (words[0] != NULL) {
