@@ -10,10 +10,17 @@
 #define DELETE_CHAR 127
 #define ESC_CHAR 27
 
+#define SHELL_VALID 0
+#define SHELL_ERROR 1
+#define SHELL_UNKOWN_COMMAND 127
+#define SHELL_EXIT 256
+
+
 
 /* command representation (multiple arguments) */
 typedef struct  {
     char ** argv;
+    int ended; // 1 if &&, 0 else for now
 } Command ;
 
 /* line of multiple commands, needed for ; usage & maybe more after */

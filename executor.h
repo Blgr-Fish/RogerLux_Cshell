@@ -8,7 +8,8 @@
 int exec_word(Command command);
 
 // built-in methods
-int exec_exit(char ** args);
+int exec_exit();
 int exec_cd(char ** args);
+int exec_history(char ** args);
 
 #endif

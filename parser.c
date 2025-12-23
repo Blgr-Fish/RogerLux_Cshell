@@ -12,6 +12,7 @@ Line parse_line( char * line) {
     pline.cmds = malloc(sizeof(Command) * MAX_CMDS);
     pline.totalcmds = 0 ;
     pline.cmds[pline.totalcmds].argv = malloc(sizeof(char*) * buffer_size);
+    
 
 
     if (!pline.cmds[pline.totalcmds].argv) {
@@ -22,8 +23,16 @@ Line parse_line( char * line) {
     t = strtok(line, TOKEN_DELIMITER) ;
     while (t != NULL) {
 
-        if (strcmp(t, ";") == 0) {
+
+        if (strcmp(t, ";") == 0 || strcmp(t, "&&") == 0) {
+
+            if (strcmp(t, "&&") == 0) {
+                pline.cmds[pline.totalcmds].ended = 1 ;// && code
+            } else {
+                pline.cmds[pline.totalcmds].ended = 0 ; // don't use since 0
+            }
             
+            // add a NULL to the command to finish it
             pline.cmds[pline.totalcmds].argv[position] = NULL ;
             
             // reset values for new cmd
@@ -43,6 +52,7 @@ Line parse_line( char * line) {
                 exit(EXIT_FAILURE);
             }
 
+            
         } else {
             pline.cmds[pline.totalcmds].argv[position++] = t ;
         }
@@ -63,6 +73,7 @@ Line parse_line( char * line) {
 
     // to ensure the end of the word
     pline.cmds[pline.totalcmds].argv[position] = NULL ;
+    pline.cmds[pline.totalcmds].ended = 0 ; // don't use since 0
     pline.totalcmds++;
     return pline ;
 

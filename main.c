@@ -9,7 +9,7 @@
 void loop() {
     char * line ;
     Line words ; // parsed line
-    int status = 1 ;
+    int shell_status = SHELL_VALID ; // last command status 
     
 
     int w_size = 1024 ;
@@ -34,7 +34,14 @@ void loop() {
         // executing all the commands with their args if they have some
         for (int tcmds = 0 ; tcmds < words.totalcmds ; ++tcmds) {
             if (words.cmds[tcmds].argv[0] != NULL) {
-                status = exec_word(words.cmds[tcmds]);
+                if (tcmds == 0 
+                || shell_status == SHELL_VALID 
+                || words.cmds[tcmds-1].ended != 1 ) {
+
+                    shell_status = exec_word(words.cmds[tcmds]);
+                }
+            } else {
+                shell_status = shell_status; // useless
             }
         }
         
@@ -46,7 +53,7 @@ void loop() {
         free(line);
         
 
-    } while (status != 0) ;
+    } while (shell_status != SHELL_EXIT) ;
 
 }
 
