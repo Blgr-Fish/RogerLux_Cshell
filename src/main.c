@@ -50,7 +50,11 @@ void loop() {
         
         // for the style effect
         getcwd(working_directory, w_size) ;
-        printf("\n╭─(%s)\n╰─>",working_directory);
+        if (shell_status == SHELL_VALID) {
+            printf("\n╭─(%s [ ✓ ])\n╰─>",working_directory);
+        } else {
+            printf("\n╭─(%s [ ✗ ])\n╰─>",working_directory);
+        }
 
 
         // enabling terminal raw mode to read real bytes and not modified values by the terminal
