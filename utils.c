@@ -1,5 +1,8 @@
 #include "utils.h"
 
+
+History history ; 
+
 /* Print all the words in a list */
 void print_words(Line words) {
     int i ;
@@ -13,3 +16,4 @@ void print_words(Line words) {
     }
     
 }
+

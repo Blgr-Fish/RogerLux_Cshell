@@ -87,16 +87,10 @@ int exec_cd(char ** words) {
 
 int exec_history() {
 
-    char * home = getenv("HOME");
-    if (!home) {
-        printf("error: home directory doesn't exist\n");
-        return SHELL_ERROR;
+    for (int i = 0 ; i < history.total_lines ; ++i){
+        printf("%d : %s\n",i+1, history.lines[i]);
     }
 
-    FILE *fptr ;
-    strcat(home, "/.cshell_history") ;
-    printf("home + file = %s\n",home);
-    fopen(home,"w");
 
     return SHELL_VALID;
 }

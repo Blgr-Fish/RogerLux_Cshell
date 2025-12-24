@@ -2,6 +2,7 @@
 #include <termios.h>
 
 static struct termios orig_termios;
+ 
 
 void disable_raw_mode() {
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios); 
@@ -92,7 +93,7 @@ char * add_spaces(char * buffer) {
     char * clean_line = malloc(2*strlen(buffer)+1);
 
     
-    for (size_t i = 0 ; i < strlen(buffer) ; ++i) {
+    for (size_t i = 0 ; i <= strlen(buffer) ; ++i) {
         if (buffer[i] == ';') {
             clean_line[ci++] = ' ';
             clean_line[ci++] = ';';
