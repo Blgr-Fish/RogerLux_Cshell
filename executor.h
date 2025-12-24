@@ -10,7 +10,7 @@ int exec_word(Command command);
 // built-in methods
 int exec_exit();
 int exec_cd(char ** args);
-int exec_history(char ** args);
+int exec_history();
 void replace_tild(char ** argv);
 
 #endif

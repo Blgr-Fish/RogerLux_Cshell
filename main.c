@@ -47,7 +47,6 @@ void loop() {
                 shell_status = shell_status; // useless
             }
         }
-        
         // freeing memory
         for (int tcmds = 0 ; tcmds < words.totalcmds ; ++tcmds) {
             for (int targvs = 0 ; words.cmds[tcmds].argv[targvs] ; ++targvs) {

@@ -14,6 +14,9 @@ int exec_word(Command command) {
     if (strcmp(command.argv[0],"cd") == 0) {
         return exec_cd(command.argv);
     }
+    if (strcmp(command.argv[0],"history") == 0) {
+        return exec_history();
+    }
 
     child_pid = fork() ;
 
@@ -69,21 +72,31 @@ int exec_exit() {
 int exec_cd(char ** words) {
 
     int status = SHELL_VALID ;
-
+    
     if (words[1] == NULL) {
-        words[1] = getenv("HOME") ;
+        words[1] = strdup(getenv("HOME")) ;
     }
-
-
+    
     if (chdir(words[1]) != 0) {
         printf("error: directory doesn't exist : %s\n", words[1]);
         status = SHELL_ERROR ;
     }
-
-
+    
     return status ;
 }
 
-int exec_history(char ** words) {
+int exec_history() {
+
+    char * home = getenv("HOME");
+    if (!home) {
+        printf("error: home directory doesn't exist\n");
+        return SHELL_ERROR;
+    }
+
+    FILE *fptr ;
+    strcat(home, "/.cshell_history") ;
+    printf("home + file = %s\n",home);
+    fopen(home,"w");
+
     return SHELL_VALID;
 }
