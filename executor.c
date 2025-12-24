@@ -6,38 +6,60 @@ int exec_word(Command command) {
     pid_t child_pid ;
     int exec_status ;
 
-   
-        if (strcmp(command.argv[0],"exit") == 0) {
-            return exec_exit();
-        }
-        if (strcmp(command.argv[0],"cd") == 0) {
-            return exec_cd(command.argv);
-        }
+    replace_tild(command.argv);
+        
+    if (strcmp(command.argv[0],"exit") == 0) {
+        return exec_exit();
+    }
+    if (strcmp(command.argv[0],"cd") == 0) {
+        return exec_cd(command.argv);
+    }
 
-        child_pid = fork() ;
+    child_pid = fork() ;
 
-        if (child_pid == 0) {
-            if (execvp(command.argv[0], command.argv) < 0) {
-                printf("error: command doesn't exist : %s\n", command.argv[0]);
-                exit(SHELL_UNKOWN_COMMAND);
-            }
-        } else if (child_pid == -1) {
-            fprintf(stderr, "error: process creation error\n");
-            return SHELL_ERROR;
-        } else {
-            waitpid(child_pid, &exec_status, 0) ; // 0 since we don't need any option for now
-            if (WIFEXITED(exec_status)) {
-                printf("exec_status = %d\n", WEXITSTATUS(exec_status));
-                return WEXITSTATUS(exec_status) ;
-            }
+    if (child_pid == 0) {
+        if (execvp(command.argv[0], command.argv) < 0) {
+            printf("error: command doesn't exist : %s\n", command.argv[0]);
+            exit(SHELL_UNKOWN_COMMAND);
+        }
+    } else if (child_pid == -1) {
+        fprintf(stderr, "error: process creation error\n");
+        return SHELL_ERROR;
+    } else {
+        waitpid(child_pid, &exec_status, 0) ; // 0 since we don't need any option for now
+        if (WIFEXITED(exec_status)) {
+            //printf("exec_status = %d\n", WEXITSTATUS(exec_status));
+            return WEXITSTATUS(exec_status) ;
+        }
 
             
-        }
+    }
     
-    
-
     return SHELL_ERROR ;
+}
 
+void replace_tild(char ** argv){
+
+    int a = 0 ;
+    int b = 1 ;
+    char * home = getenv("HOME") ; 
+
+    if (!home) return ;
+
+    while (argv[a] != NULL ) {
+            if (argv[a][0] == '~') {
+                char * newArg = malloc(strlen(home) + strlen(argv[a]) + 1 );
+                strcpy(newArg, home);
+                while(argv[a][b]){
+                    strncat(newArg,&argv[a][b],1);
+                    b++ ; 
+                }
+                b = 1 ;
+                free(argv[a]);
+                argv[a] = newArg ;
+            }
+            a++;
+        }
 }
 
 int exec_exit() {
@@ -48,7 +70,7 @@ int exec_cd(char ** words) {
 
     int status = SHELL_VALID ;
 
-    if (words[1] == NULL || strcmp(words[1], "~") == 0) {
+    if (words[1] == NULL) {
         words[1] = getenv("HOME") ;
     }
 

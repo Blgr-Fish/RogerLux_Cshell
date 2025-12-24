@@ -47,8 +47,14 @@ void loop() {
         
         // freeing memory
         for (int tcmds = 0 ; tcmds < words.totalcmds ; ++tcmds) {
+            for (int targvs = 0 ; words.cmds[tcmds].argv[targvs] ; ++targvs) {
+                // free all arguments of the command
+                free(words.cmds[tcmds].argv[targvs]);
+            }
+            // free the command pointer
             free(words.cmds[tcmds].argv);
         }
+        // free the all commands pointer
         free(words.cmds);
         free(line);
         
@@ -56,6 +62,7 @@ void loop() {
     } while (shell_status != SHELL_EXIT) ;
 
 }
+
 
 int main() {
     loop();

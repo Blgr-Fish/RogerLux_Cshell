@@ -11,5 +11,6 @@ int exec_word(Command command);
 int exec_exit();
 int exec_cd(char ** args);
 int exec_history(char ** args);
+void replace_tild(char ** argv);
 
 #endif

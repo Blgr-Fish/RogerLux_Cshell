@@ -1,0 +1,306 @@
+#include "executor.h"
+
+
+/* Execute a command */
+int exec_word(Command command) {
+    pid_t child_pid ;
+    int exec_status ;
+
+   
+        if (strcmp(command.argv[0],"exit") == 0) {
+            return exec_exit();
+        }
+        if (strcmp(command.argv[0],"cd") == 0) {
+            return exec_cd(command.argv);
+        }
+
+        child_pid = fork() ;
+
+        if (child_pid == 0) {
+            if (execvp(command.argv[0], command.argv) < 0) {
+                printf("error: command doesn't exist : %s\n", command.argv[0]);
+                exit(SHELL_UNKOWN_COMMAND);
+            }
+        } else if (child_pid == -1) {
+            fprintf(stderr, "error: process creation error\n");
+            return SHELL_ERROR;
+        } else {
+            waitpid(child_pid, &exec_status, 0) ; // 0 since we don't need any option for now
+            if (WIFEXITED(exec_status)) {
+                printf("exec_status = %d\n", WEXITSTATUS(exec_status));
+                return WEXITSTATUS(exec_status) ;
+            }
+
+            
+        }
+    
+    
+
+    return SHELL_ERROR ;
+
+}
+
+int exec_exit() {
+    return SHELL_EXIT ;
+}
+
+int exec_cd(char ** words) {
+
+    int status = SHELL_VALID ;
+
+    if (words[1] == NULL || strcmp(words[1], "~") == 0) {
+        words[1] = getenv("HOME") ;
+    }
+
+
+    if (chdir(words[1]) != 0) {
+        printf("error: directory doesn't exist : %s\n", words[1]);
+        status = SHELL_ERROR ;
+    }
+
+
+    return status ;
+}
+
+int exec_history(char ** words) {
+    return SHELL_VALID;
+}#include "utils.h"
+#include "executor.h"
+#include "parser.h"
+#include "reader.h"
+
+
+
+/* Loop to read and execute commands */
+void loop() {
+    char * line ;
+    Line words ; // parsed line
+    int shell_status = SHELL_VALID ; // last command status 
+    
+
+    int w_size = 1024 ;
+    char working_directory[w_size] ;
+
+
+    do {
+        
+        // for the style effect
+        getcwd(working_directory, w_size) ;
+        printf("\n╭─(%s)\n╰─>",working_directory);
+
+
+        // enabling terminal raw mode to read real bytes and not modified values by the terminal
+        enable_raw_mode() ;
+        line = read_line() ;
+        disable_raw_mode() ;
+
+        // turning line into multiple commands & arguments
+        words = parse_line(line) ;
+        
+        // executing all the commands with their args if they have some
+        for (int tcmds = 0 ; tcmds < words.totalcmds ; ++tcmds) {
+            if (words.cmds[tcmds].argv[0] != NULL) {
+                if (tcmds == 0 
+                || shell_status == SHELL_VALID 
+                || words.cmds[tcmds-1].ended != 1 ) {
+
+                    shell_status = exec_word(words.cmds[tcmds]);
+                }
+            } else {
+                shell_status = shell_status; // useless
+            }
+        }
+        
+        // freeing memory
+        for (int tcmds = 0 ; tcmds < words.totalcmds ; ++tcmds) {
+            free(words.cmds[tcmds].argv);
+        }
+        free(words.cmds);
+        free(line);
+        
+
+    } while (shell_status != SHELL_EXIT) ;
+
+}
+
+int main() {
+    loop();
+    return 0;
+}#include "parser.h"
+
+
+/* Parse a line into tokens */
+Line parse_line( char * line) {
+    int buffer_size = BUFFER_SIZE ;
+    int position = 0 ;
+
+    char * t ;
+    //char ** tokens = malloc(sizeof(char*) * buffer_size);
+    Line pline;
+    pline.cmds = malloc(sizeof(Command) * MAX_CMDS);
+    pline.totalcmds = 0 ;
+    pline.cmds[pline.totalcmds].argv = malloc(sizeof(char*) * buffer_size);
+    
+
+
+    if (!pline.cmds[pline.totalcmds].argv) {
+        fprintf(stderr, "error: Allocation error\n");
+        exit(EXIT_FAILURE);
+    }
+
+    t = strtok(line, TOKEN_DELIMITER) ;
+    while (t != NULL) {
+
+
+        if (strcmp(t, ";") == 0 || strcmp(t, "&&") == 0) {
+
+            if (strcmp(t, "&&") == 0) {
+                pline.cmds[pline.totalcmds].ended = 1 ;// && code
+            } else {
+                pline.cmds[pline.totalcmds].ended = 0 ; // don't use since 0
+            }
+            
+            // add a NULL to the command to finish it
+            pline.cmds[pline.totalcmds].argv[position] = NULL ;
+            
+            // reset values for new cmd
+            position = 0 ;
+            buffer_size = BUFFER_SIZE ;
+            pline.totalcmds ++ ;
+
+            if (pline.totalcmds >= MAX_CMDS) {
+                fprintf(stderr, "error: too many commands\n");
+                exit(EXIT_FAILURE);
+            }
+
+            pline.cmds[pline.totalcmds].argv = malloc(sizeof(char*) * buffer_size);
+
+            if (!pline.cmds[pline.totalcmds].argv) {
+                fprintf(stderr, "error: Allocation error\n");
+                exit(EXIT_FAILURE);
+            }
+
+            
+        } else {
+            pline.cmds[pline.totalcmds].argv[position++] = t ;
+        }
+        
+        if (position >= buffer_size) {
+            buffer_size += BUFFER_SIZE ;
+            pline.cmds[pline.totalcmds].argv = realloc(pline.cmds[pline.totalcmds].argv,sizeof(char * )* buffer_size);
+
+            if (!pline.cmds[pline.totalcmds].argv) {
+                fprintf(stderr, "error: Allocation error\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        t = strtok(NULL, TOKEN_DELIMITER);
+
+    }
+
+    // to ensure the end of the word
+    pline.cmds[pline.totalcmds].argv[position] = NULL ;
+    pline.cmds[pline.totalcmds].ended = 0 ; // don't use since 0
+    pline.totalcmds++;
+    return pline ;
+
+}#include "reader.h"
+#include <termios.h>
+
+static struct termios orig_termios;
+
+void disable_raw_mode() {
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios); 
+}
+
+void enable_raw_mode() {
+    struct termios raw;
+    atexit(disable_raw_mode);
+    tcgetattr(STDIN_FILENO, &orig_termios);
+    raw = orig_termios;
+    raw.c_lflag &= ~(ICANON | ECHO); 
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+}
+
+/* Read a line from the standard input */
+char * read_line() {
+    int buffer_size = BUFFER_SIZE ;
+    int position = 0 ;
+
+    char * buffer = malloc(sizeof(char) * buffer_size) ;
+
+    char c ;
+
+    // no space for allocation
+    if (!buffer) {
+        fprintf(stderr, "error: Allocation error\n") ;
+        exit(EXIT_FAILURE) ;
+    }
+
+    while (1) {
+
+        c = getchar() ;
+
+        // enf of line
+        if (c == EOF || c == '\n') {
+            buffer[position] = '\0' ;
+            printf("\n");
+            return buffer ;
+        } 
+        // delete character
+        else if (c == DELETE_CHAR) {
+            
+            if (position > 0) {
+                position -- ;
+                printf("\b \b") ;
+                fflush(stdout) ;
+            }
+        // only for arrow characters for now
+        }else if (c == ESC_CHAR) {
+            
+            // arrows are composed of 3 bytes, so we need to take of the 2 next chars
+            char seq1 = getchar();
+            char seq2 = getchar();
+                /* 
+                * for later if i want to handle this...
+                    switch (seq2) {
+                        case 'A': // up
+                        case 'B': // down
+                        case 'C': // right
+                        case 'D': // left
+                    }
+                */
+
+        } else {
+            buffer[position++] = c ;
+            printf("%c", c);
+        }
+
+        if (position >= buffer_size) {
+
+            buffer_size += BUFFER_SIZE ;
+            buffer = realloc(buffer, sizeof(char)* buffer_size);
+
+            // no space for allocation
+            if (!buffer) {
+                fprintf(stderr, "error: Allocation error\n") ;
+                exit(EXIT_FAILURE) ;
+            }
+        }
+    }
+}#include "utils.h"
+
+/* Print all the words in a list */
+void print_words(Line words) {
+    int i ;
+
+    for (int tcmds = 0 ; tcmds <= words.totalcmds ; ++ tcmds) {
+        i = 0;
+        while (words.cmds[tcmds].argv[i] != NULL) {
+            printf("%s\n", words.cmds[tcmds].argv[i]);
+            i++;
+        }
+    }
+    
+}

@@ -1,0 +1,81 @@
+#ifndef EXECUTOR_H
+#define EXECUTOR_H
+
+#include "utils.h"
+
+
+
+int exec_word(Command command);
+
+// built-in methods
+int exec_exit();
+int exec_cd(char ** args);
+int exec_history(char ** args);
+
+#endif#ifndef INCLUDES_H
+#define INCLUDES_H
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+
+
+
+#endif 
+#ifndef PARSER_H
+#define PARSER_H
+
+#include "utils.h"
+
+
+Line parse_line(char * line);
+
+#endif#ifndef READER_H
+#define READER_H
+
+#include "utils.h"
+
+void disable_raw_mode() ;
+void enable_raw_mode() ; 
+char * read_line();
+
+
+#endif#ifndef UTILS_H
+#define UTILS_H
+
+#include "includes.h"
+
+#define BUFFER_SIZE 1024 
+#define TOKEN_DELIMITER " \t" // set of delimiters
+#define MAX_CMDS 10
+
+#define DELETE_CHAR 127
+#define ESC_CHAR 27
+
+#define SHELL_VALID 0
+#define SHELL_ERROR 1
+#define SHELL_UNKOWN_COMMAND 127
+#define SHELL_EXIT 256
+
+
+
+/* command representation (multiple arguments) */
+typedef struct  {
+    char ** argv;
+    int ended; // 1 if &&, 0 else for now
+} Command ;
+
+/* line of multiple commands, needed for ; usage & maybe more after */
+typedef struct {
+    Command* cmds;
+    int totalcmds;
+} Line ;
+
+void print_words(Line words);
+
+
+
+#endif

@@ -3,7 +3,6 @@
 
 #include "utils.h"
 
-
 Line parse_line(char * line);
 
 #endif

@@ -54,7 +54,8 @@ Line parse_line( char * line) {
 
             
         } else {
-            pline.cmds[pline.totalcmds].argv[position++] = t ;
+            // so we can free argv later 
+            pline.cmds[pline.totalcmds].argv[position++] = strdup(t) ;
         }
         
         if (position >= buffer_size) {
