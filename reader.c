@@ -83,3 +83,36 @@ char * read_line() {
         }
     }
 }
+
+
+char * add_spaces(char * buffer) {
+
+    int ci = 0 ;
+    
+    char * clean_line = malloc(2*strlen(buffer)+1);
+
+    
+    for (size_t i = 0 ; i < strlen(buffer) ; ++i) {
+        if (buffer[i] == ';') {
+            clean_line[ci++] = ' ';
+            clean_line[ci++] = ';';
+            clean_line[ci++] = ' ';
+        } else if (buffer[i] == '&' && buffer[i+1] == '&') {
+            clean_line[ci++] = ' ';
+            clean_line[ci++] = '&';
+            clean_line[ci++] = '&';
+            clean_line[ci++] = ' ';
+            i++;                    // not count the second & else it with goes to the "else" brand, adding to many &s
+        } else if (buffer[i] == '|' && buffer[i+1] == '|') {
+            clean_line[ci++] = ' ';
+            clean_line[ci++] = '|';
+            clean_line[ci++] = '|';
+            clean_line[ci++] = ' ';
+            i++;                    // same
+        } else {
+            clean_line[ci++] = buffer[i];
+        }
+    }
+
+    return clean_line ;
+}

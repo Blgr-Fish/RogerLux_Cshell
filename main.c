@@ -26,6 +26,9 @@ void loop() {
         // enabling terminal raw mode to read real bytes and not modified values by the terminal
         enable_raw_mode() ;
         line = read_line() ;
+        char * old_line = line ;
+        line = add_spaces(old_line);
+        free(old_line) ;
         disable_raw_mode() ;
 
         // turning line into multiple commands & arguments
