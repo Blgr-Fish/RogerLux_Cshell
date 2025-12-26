@@ -3,12 +3,14 @@
 #include "parser.h"
 #include "reader.h"
 
+/* Initialize history */
 void init_history() {
     history.lines = malloc(sizeof(char*) * HISTORY_SIZE);
     history.total_lines = 0;
     history.current_line = 0 ;
 }
 
+/* Add a command to the history file. Used at the end of each command */
 void add_to_history(char * cmd) {
     
     char * home = getenv("HOME");
@@ -88,8 +90,10 @@ void loop() {
         }
         // free the all commands pointer
 
-        history.lines[history.total_lines++] = strdup(old_line);
-        history.current_line = history.total_lines-1 ;
+        if (strlen(old_line) > 0){
+            history.lines[history.total_lines++] = strdup(old_line);
+            history.current_line = history.total_lines-1 ;
+        }
         free(old_line) ;
         free(words.cmds);
         free(line);
