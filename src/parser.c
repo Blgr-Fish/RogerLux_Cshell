@@ -38,30 +38,41 @@ Line parse_line( char * line) {
                 pline.cmds[pline.totalcmds].ended = SEMICOLON ; 
             }
             
-            // add a NULL to the command to finish it
-            pline.cmds[pline.totalcmds].argv[position] = NULL ;
+            if (position > 0) {
+                
+                // add a NULL to the command to finish it
+                pline.cmds[pline.totalcmds].argv[position] = NULL ;
             
-            // reset values for new cmd
-            position = 0 ;
-            buffer_size = BUFFER_SIZE ;
-            pline.totalcmds ++ ;
+                // reset values for new cmd
+                position = 0 ;
+                buffer_size = BUFFER_SIZE ;
+                pline.totalcmds++ ;
+                
 
-            if (pline.totalcmds >= MAX_CMDS) {
-                fprintf(stderr, "error: too many commands\n");
-                exit(EXIT_FAILURE);
+                if (pline.totalcmds >= MAX_CMDS) {
+                    fprintf(stderr, "error: too many commands\n");
+                    exit(EXIT_FAILURE);
+                }
+
+                pline.cmds[pline.totalcmds].argv = malloc(sizeof(char*) * buffer_size);
+
+                if (!pline.cmds[pline.totalcmds].argv) {
+                    fprintf(stderr, "error: Allocation error\n");
+                    exit(EXIT_FAILURE);
+                }
+            } else { 
+                fprintf(stderr, "error: parse error  near %s\n", t);
+                pline.totalcmds = -1 ;
+                return pline ;
             }
-
-            pline.cmds[pline.totalcmds].argv = malloc(sizeof(char*) * buffer_size);
-
-            if (!pline.cmds[pline.totalcmds].argv) {
-                fprintf(stderr, "error: Allocation error\n");
-                exit(EXIT_FAILURE);
-            }
+            
 
             
         } else {
             // so we can free argv later 
             pline.cmds[pline.totalcmds].argv[position++] = strdup(t) ;
+
+             
         }
         
         if (position >= buffer_size) {

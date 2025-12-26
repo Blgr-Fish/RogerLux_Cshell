@@ -6,6 +6,7 @@
 void init_history() {
     history.lines = malloc(sizeof(char*) * HISTORY_SIZE);
     history.total_lines = 0;
+    history.current_line = 0 ;
 }
 
 void add_to_history(char * cmd) {
@@ -73,6 +74,7 @@ void loop() {
         
         // handle commands depending on their ending & the last status
         shell_status = handle_command(words, shell_status);
+
             
         
         // freeing memory
@@ -87,6 +89,7 @@ void loop() {
         // free the all commands pointer
 
         history.lines[history.total_lines++] = strdup(old_line);
+        history.current_line = history.total_lines-1 ;
         free(old_line) ;
         free(words.cmds);
         free(line);

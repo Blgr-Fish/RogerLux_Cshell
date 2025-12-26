@@ -8,38 +8,44 @@ int handle_command(Line words, int last_status){
     // executing all the commands with their args if they have some
     for (int tcmds = 0 ; tcmds < words.totalcmds ; ++tcmds) {
 
-        if (words.totalcmds == 1 && (words.cmds[tcmds].ended != REDIRECT_OUT || words.cmds[tcmds].ended != REDIRECT_OUT_APPEND)) {
-            shell_status = exec_word(words.cmds[tcmds]);
-        } else {
-            switch (words.cmds[tcmds-1].ended) {
-                case SEMICOLON:
-                    shell_status = exec_word(words.cmds[tcmds]);
-                    break;
-                case AND_AND:
-                    if (shell_status == SHELL_VALID)
+        if ( words.cmds[tcmds].argv[0] != NULL) {
+            if ((words.cmds[tcmds].ended == REDIRECT_OUT || words.cmds[tcmds].ended == REDIRECT_OUT_APPEND)) {
+                continue ;
+            } else {
+                switch (words.cmds[tcmds-1].ended) {
+                    case SEMICOLON:
                         shell_status = exec_word(words.cmds[tcmds]);
-                    break;
-                case OR_OR:
-                    if (shell_status != SHELL_VALID)
+                        break;
+                    case AND_AND:
+                        if (shell_status == SHELL_VALID)
+                            shell_status = exec_word(words.cmds[tcmds]);
+                        break;
+                    case OR_OR:
+                        if (shell_status != SHELL_VALID)
+                            shell_status = exec_word(words.cmds[tcmds]);
+                        break;
+                    case PIPE:
+                        // TODO 
+                        break;
+                    case REDIRECT_IN: // <
+                        // TODO 
+                        break;
+                    case REDIRECT_OUT:
+                        shell_status = write_to_file("w", shell_status, words, tcmds);
+                        break;
+                    case REDIRECT_OUT_APPEND:
+                        shell_status = write_to_file("a", shell_status, words, tcmds);
+                        break;
+                    default:
                         shell_status = exec_word(words.cmds[tcmds]);
-                    break;
-                case PIPE:
-                    // TODO 
-                    break;
-                case REDIRECT_IN: // <
-                    // TODO 
-                    break;
-                case REDIRECT_OUT:
-                    shell_status = write_to_file("w", shell_status, words, tcmds);
-                    break;
-                case REDIRECT_OUT_APPEND:
-                    shell_status = write_to_file("a", shell_status, words, tcmds);
-                    break;
-                default:
-                    // nothing
-                    break;
+                        /*printf("here " ) ;
+                        printf("executing command : %s\n", words.cmds[tcmds].argv[0] ) ;
+                        printf("total commds :  %d\n", words.totalcmds) ;*/
+                        break;
+                }
             }
-        }
+
+        }        
     }
         return shell_status ;
 }

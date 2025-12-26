@@ -27,10 +27,7 @@ char * read_line() {
     char c ;
 
     // no space for allocation
-    if (!buffer) {
-        fprintf(stderr, "error: Allocation error\n") ;
-        exit(EXIT_FAILURE) ;
-    }
+    test_buffer_error(buffer);
 
     while (1) {
 
@@ -56,16 +53,68 @@ char * read_line() {
             // arrows are composed of 3 bytes, so we need to take of the 2 next chars
             char seq1 = getchar();
             char seq2 = getchar();
-                /* 
-                * for later if i want to handle this...
-                    switch (seq2) {
-                        case 'A': // up
-                        case 'B': // down
-                        case 'C': // right
-                        case 'D': // left
-                    }
-                */
+                 
+            switch (seq2) {
+                case 'A': // up
 
+                    if (history.lines[0]) {
+
+                        int c_line = history.current_line-- ;
+                        if (c_line <= 0 ){
+                            c_line = 0 ; 
+                            history.current_line = 0 ;
+                        } 
+                            
+                        char * old_command = history.lines[c_line] ;
+                        int old_size = strlen(old_command);
+
+                        if (old_size + 1 > buffer_size ) {
+                            buffer_size += BUFFER_SIZE + 1 ;
+                        }
+
+                        buffer = realloc(buffer, buffer_size);
+                        test_buffer_error(buffer);
+                        strcpy(buffer,old_command);
+                        position = old_size;
+
+                        printf("\r\33[2K╰─>%s",old_command);
+                        fflush(stdout);  
+                    }
+                    break;
+                case 'B': // down
+
+                    if (history.lines[0]) {
+
+                        int c_line = history.current_line++ ;
+                        if (c_line >= history.total_lines ){
+                            c_line = history.total_lines-1 ; 
+                            history.current_line = history.total_lines-1 ;
+                        } 
+                            
+                        char * old_command = history.lines[c_line] ;
+                        int old_size = strlen(old_command);
+
+                        if (old_size + 1 > buffer_size ) {
+                            buffer_size += BUFFER_SIZE + 1 ;
+                        }
+
+                        buffer = realloc(buffer, buffer_size);
+                        test_buffer_error(buffer);
+                        strcpy(buffer,old_command);
+                        position = old_size;
+
+                        printf("\r\33[2K╰─>%s",old_command);
+                        fflush(stdout);  
+                    }
+                    break;
+                case 'C': // right
+                    break;
+                case 'D': // left
+                    break;
+                default:
+                    break;
+            }
+                
         } else {
             buffer[position++] = c ;
             printf("%c", c);
@@ -77,10 +126,7 @@ char * read_line() {
             buffer = realloc(buffer, sizeof(char)* buffer_size);
 
             // no space for allocation
-            if (!buffer) {
-                fprintf(stderr, "error: Allocation error\n") ;
-                exit(EXIT_FAILURE) ;
-            }
+            test_buffer_error(buffer);
         }
     }
 }
@@ -92,56 +138,34 @@ char * add_spaces(char * buffer) {
     
     char * clean_line = malloc(2*strlen(buffer)+1);
 
+    size_t sbuffer = strlen(buffer);
+
     
-    for (size_t i = 0 ; i <= strlen(buffer) ; ++i) {
-        if (buffer[i] == ';') {
+    for (size_t i = 0 ; i <= sbuffer ; ++i) {
+
+
+        if ((buffer[i] == '&' && buffer[i+1] == '&') || (buffer[i] == '|' && buffer[i+1] == '|') || (buffer[i] == '>' && buffer[i+1] == '>')) {
             clean_line[ci++] = ' ';
-            clean_line[ci++] = ';';
+            clean_line[ci++] = buffer[i];
+            clean_line[ci++] = buffer[i+1];
             clean_line[ci++] = ' ';
-        } else if (buffer[i] == '&' && buffer[i+1] == '&') {
+            i++; 
+        }
+        else if (buffer[i] == ';' || buffer[i] == '>' || buffer[i] == '<' || buffer[i] == '&' || buffer[i] == '|') {
             clean_line[ci++] = ' ';
-            clean_line[ci++] = '&';
-            clean_line[ci++] = '&';
+            clean_line[ci++] = buffer[i];
             clean_line[ci++] = ' ';
-            i++;                    // not count the second & else it with goes to the "else" brand, adding to many &s
-        } else if (buffer[i] == '|' && buffer[i+1] == '|') {
-            clean_line[ci++] = ' ';
-            clean_line[ci++] = '|';
-            clean_line[ci++] = '|';
-            clean_line[ci++] = ' ';
-            i++;                    
-        } else if (buffer[i] == '>' && buffer[i+1] == '>') {
-            clean_line[ci++] = ' ';
-            clean_line[ci++] = '>';
-            clean_line[ci++] = '>';
-            clean_line[ci++] = ' ';
-            i++;                   
-        } else if (buffer[i] == '<' && buffer[i+1] == '<') {
-            clean_line[ci++] = ' ';
-            clean_line[ci++] = '<';
-            clean_line[ci++] = '<';
-            clean_line[ci++] = ' ';
-            i++;                   
-        } else if (buffer[i] == '>') {
-            clean_line[ci++] = ' ';
-            clean_line[ci++] = '>';
-            clean_line[ci++] = ' ';                
-        } else if (buffer[i] == '<') {
-            clean_line[ci++] = ' ';
-            clean_line[ci++] = '<';
-            clean_line[ci++] = ' ';                 
-        } else if (buffer[i] == '&') {
-            clean_line[ci++] = ' ';
-            clean_line[ci++] = '&';
-            clean_line[ci++] = ' ';                 
-        } else if (buffer[i] == '|') {
-            clean_line[ci++] = ' ';
-            clean_line[ci++] = '|';
-            clean_line[ci++] = ' ';                 
-        } else {
+        }  else {
             clean_line[ci++] = buffer[i];
         }
     }
 
     return clean_line ;
+}
+
+void test_buffer_error(char * buffer){
+    if (!buffer) {
+        fprintf(stderr, "error: Allocation error\n");
+        exit(EXIT_FAILURE);
+    }
 }

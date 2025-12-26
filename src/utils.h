@@ -48,6 +48,7 @@ typedef struct {
 typedef struct {
     char** lines;
     int total_lines;
+    int current_line; // for navigating through history
   } History ;
 
 void print_words(Line words);
