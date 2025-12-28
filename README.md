@@ -134,7 +134,7 @@ I/O redirection
 - **Processes**
     - Forks a child for each external command.
     - Foreground processes: shell waits using `waitpid`.
-    - Background processes: ; terminated processes cleaned with SIGCHLD handler.
+    - Background processes: terminated processes cleaned with SIGCHLD handler to prevent zombie processes.
 - **Parsing**
      - Input is tokenized with `strtok`.
     - Logical separators `;`, `&&`, `||` and redirection `>`, `>>` are handled during parsing.
