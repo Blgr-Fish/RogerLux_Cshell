@@ -30,6 +30,7 @@ RogerLux (`rsh`) is a mini Unix shell implemented in C. It reads user commands, 
 - **I/O redirection**
     - `>` to overwrite output to a file.
     - `>>` to append output to a file.
+    - `<` to use file content as input.
 - **Background processes**
      - `&` at the end of a command runs it in the background.
      - Shell tracks background PIDs and prints a notification when they terminate.
