@@ -2,6 +2,7 @@
 #include "executor.h"
 #include "parser.h"
 #include "reader.h"
+#include <errno.h>
 
 
 void add_to_history(char * cmd) ;

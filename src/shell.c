@@ -39,8 +39,13 @@ void from_history(){
     FILE *fptr = fopen(home_history,"r");
 
     if (!fptr) {
-        perror("fopen");
-        return;
+        // If the file doesn't exist, it's not an error, just means no history yet
+        if (errno == ENOENT) {
+            return;
+        } else {
+            perror("fopen");
+            return;
+        }
     }
 
     char command[BUFFER_SIZE];
